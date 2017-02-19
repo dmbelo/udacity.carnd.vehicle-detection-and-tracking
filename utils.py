@@ -32,10 +32,8 @@ class Features():
                                    np.ravel(self.hog_features)))
         return features
 
-    def extract_from_tile(self):
-        if self.img is None:
-            raise ValueError('No image has been set')
-        raise NotImplementedError
+    def extract_from_window(self, window):
+        ypos = yb * cells
 
     def visualize_hog(self, img):
         _, img_hog = get_hog(img, orientations=self.orientations,
@@ -89,10 +87,8 @@ def get_color_hist(img, nbins=32):
     return hist_features
 
 
-def sliding_window_search(img,
-                          x_start_stop=[None, None],
-                          y_start_stop=[None, None],
-                          xy_window=(64, 64),
+def sliding_windows(img, x_start_stop=[None, None],
+                          y_start_stop=[None, None], xy_window=(64, 64),
                           xy_overlap=(0.5, 0.5)):
 
     # If x and/or y start/stop positions not defined, set to image size
@@ -143,16 +139,24 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     return img_copy
 
 
+def process_image(file):
+    img = cv2.imread(file)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
+    img = img.astype(np.float32)
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return img
+
+
 if __name__ == "__main__":
     img_file = '000528.png'
     img = cv2.imread(img_file)
     image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     print(image.shape)
-    windows = sliding_window_search(image,
-                                    x_start_stop=[100, 399],
-                                    y_start_stop=[150, 249],
-                                    xy_window=(200, 200),
-                                    xy_overlap=(0.0, 0.0))
+    windows = sliding_windows(image,
+                                    x_start_stop=[None, None],
+                                    y_start_stop=[None, None],
+                                    xy_window=(100, 100),
+                                    xy_overlap=(0.1, 0.1))
 
     window_img = draw_boxes(image, windows, color=(0, 0, 255), thick=6)
 

@@ -4,8 +4,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-from utils import Features
+from utils import Features, process_image
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -25,17 +24,12 @@ def print_stats(cars, notcars):
     print("Image datatype: {}".format(img.dtype))
 
 
-def process_image(file):
-    img = cv2.imread(file)
-    return cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
-
-
 def train(cars, notcars):
     # Initialize feature object
     feat_obj = Features(spatial_size=(32, 32),
                         hist_bins=32,
                         orientations=9,
-                        pixels_per_cell=20,
+                        pixels_per_cell=8,
                         cells_per_block=2)
 
     features_car = []
@@ -83,6 +77,8 @@ def train(cars, notcars):
 
     # Save to disk
     joblib.dump(clf, 'classifier.pkl', compress=9)
+    joblib.dump(feat_obj, 'features.pkl', compress=9)
+    joblib.dump(scaler, 'scaler.pkl', compress=9)
 
     return clf
 
