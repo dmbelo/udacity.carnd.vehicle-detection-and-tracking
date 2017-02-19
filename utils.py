@@ -6,41 +6,47 @@ from skimage.feature import hog
 
 
 class Features():
-    def __init__(self, img, spatial_size, hist_bins, orientations,
-                 pixels_per_cell, cells_per_block):
-        self.img = img
+    def __init__(self, spatial_size, hist_bins, orientations, pixels_per_cell,
+                 cells_per_block):
+        self.img = None
         self.spatial_size = spatial_size
         self.hist_bins = hist_bins
         self.orientations = orientations
         self.pixels_per_cell = pixels_per_cell
         self.cells_per_block = cells_per_block
-        self.hog_features = get_hog_features(img, orientations=orientations,
-                                             pixels_per_cell=pixels_per_cell,
-                                             cells_per_block=cells_per_block,
-                                             feature_vector=False)[0]
+        self.hog_features = None
 
-    def extract(self):
-        spatial_features = get_bin_spatial_features(self.img,
-                                                    size=self.spatial_size)
-        hist_features = get_color_hist_features(self.img, nbins=self.hist_bins)
-        features = np.concatenate((spatial_features,
-                                   hist_features,
+    def set_image(self, img):
+        self.img = img
+        hog_features, _ = get_hog(img, orientations=self.orientations,
+                                  pixels_per_cell=self.pixels_per_cell,
+                                  cells_per_block=self.cells_per_block,
+                                  feature_vector=False)
+        self.hog_features = hog_features
+
+    def extract(self, img):
+        self.set_image(img)
+        spatial_features = get_bin_spatial(img, size=self.spatial_size)
+        hist_features = get_color_hist(img, nbins=self.hist_bins)
+        features = np.concatenate((spatial_features, hist_features,
                                    np.ravel(self.hog_features)))
         return features
 
     def extract_from_tile(self):
+        if self.img is None:
+            raise ValueError('No image has been set')
         raise NotImplementedError
 
-    def visualize_hog(self):
-        _, img_hog = get_hog_features(self.img, orientations=self.orientations,
-                                      pixels_per_cell=self.pixels_per_cell,
-                                      cells_per_block=self.cells_per_block,
-                                      visualise=True, feature_vector=False)
+    def visualize_hog(self, img):
+        _, img_hog = get_hog(img, orientations=self.orientations,
+                             pixels_per_cell=self.pixels_per_cell,
+                             cells_per_block=self.cells_per_block,
+                             visualise=True, feature_vector=False)
         return img_hog
 
 
-def get_hog_features(img, orientations, pixels_per_cell, cells_per_block,
-                     visualise=False, feature_vector=True):
+def get_hog(img, orientations, pixels_per_cell, cells_per_block,
+            visualise=False, feature_vector=True):
 
     channels = range(img.shape[2])
     features = []
@@ -61,14 +67,14 @@ def get_hog_features(img, orientations, pixels_per_cell, cells_per_block,
     return features, img_hog
 
 
-def get_bin_spatial_features(img, size=(32, 32)):
+def get_bin_spatial(img, size=(32, 32)):
     """
     Function to compute binned color features
     """
     return cv2.resize(img, size).ravel()
 
 
-def get_color_hist_features(img, nbins=32):
+def get_color_hist(img, nbins=32):
     """
     Function to compute color histogram features
     """
