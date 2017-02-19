@@ -6,44 +6,59 @@ from skimage.feature import hog
 
 
 class Features():
-    def __init__(self, img, spatial_size, hist_bins):
+    def __init__(self, img, spatial_size, hist_bins, orientations,
+                 pixels_per_cell, cells_per_block):
         self.img = img
         self.spatial_size = spatial_size
         self.hist_bins = hist_bins
-        self.hog_features = get_hog_features(img)
+        self.orientations = orientations
+        self.pixels_per_cell = pixels_per_cell
+        self.cells_per_block = cells_per_block
+        self.hog_features = get_hog_features(img, orientations=orientations,
+                                             pixels_per_cell=pixels_per_cell,
+                                             cells_per_block=cells_per_block,
+                                             feature_vector=False)[0]
 
     def extract(self):
-        spatial_features = get_bin_spatial_features(self.img, size=self.spatial_size)
+        spatial_features = get_bin_spatial_features(self.img,
+                                                    size=self.spatial_size)
         hist_features = get_color_hist_features(self.img, nbins=self.hist_bins)
         features = np.concatenate((spatial_features,
                                    hist_features,
-                                   self.hog_features))
+                                   np.ravel(self.hog_features)))
         return features
 
     def extract_from_tile(self):
         raise NotImplementedError
 
+    def visualize_hog(self):
+        _, img_hog = get_hog_features(self.img, orientations=self.orientations,
+                                      pixels_per_cell=self.pixels_per_cell,
+                                      cells_per_block=self.cells_per_block,
+                                      visualise=True, feature_vector=False)
+        return img_hog
+
 
 def get_hog_features(img, orientations, pixels_per_cell, cells_per_block,
                      visualise=False, feature_vector=True):
 
-    if visualise:
-        out = hog(img, orientations=orientations,
+    channels = range(img.shape[2])
+    features = []
+    img_hog = np.zeros_like(img)
+
+    for i, channel in enumerate(channels):
+        out = hog(img[:, :, channel], orientations=orientations,
                   pixels_per_cell=(pixels_per_cell, pixels_per_cell),
                   cells_per_block=(cells_per_block, cells_per_block),
                   transform_sqrt=True, visualise=visualise,
                   feature_vector=feature_vector)
-        return out[0], out[1]  # features, hog_image
-    else:
-        features = []
-        for channel in range(img.shape[2]):
-            out = hog(img[:, :, channel], orientations=orientations,
-                      pixels_per_cell=(pixels_per_cell, pixels_per_cell),
-                      cells_per_block=(cells_per_block, cells_per_block),
-                      transform_sqrt=True, visualise=visualise,
-                      feature_vector=feature_vector)
+        if visualise:
+            features.append(out[0])
+            img_hog[:, :, i] = out[1]
+        else:
             features.append(out)
-        return np.ravel(features)
+
+    return features, img_hog
 
 
 def get_bin_spatial_features(img, size=(32, 32)):
