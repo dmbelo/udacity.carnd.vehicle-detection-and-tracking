@@ -2,6 +2,7 @@ import glob
 import cv2
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 
 from utils import Features
 from sklearn.svm import SVC
@@ -70,6 +71,17 @@ def train(cars, notcars):
     accuracy = clf.score(features_test, labels_test)
     print('Test Accuracy of SVC = {0:2.4f}'.format(accuracy))
 
+    # Example predcitions
+
+    img_example = process_image(cars[np.random.randint(0, len(cars))])
+    feature_example = feat_obj.extract(img_example)
+    features_scaled = scaler.transform(feature_example)
+    print(clf.predict(features_scaled))
+    plt.imshow(cv2.cvtColor(img_example, cv2.COLOR_YCR_CB2RGB))
+    plt.show()
+
+    return clf
+
 
 if __name__ == "__main__":
     # List of data set image files
@@ -77,4 +89,4 @@ if __name__ == "__main__":
     cars = glob.glob('data/vehicles_smallset/*/*')
 
     print_stats(cars, notcars)
-    train(cars, notcars)
+    clf = train(cars, notcars)
