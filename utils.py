@@ -2,6 +2,71 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
+from skimage.feature import hog
+
+
+class Features():
+    def __init__(self, img, spatial_size, hist_bins):
+        self.img = img
+        self.spatial_size = spatial_size
+        self.hist_bins = hist_bins
+        self.hog_features = get_hog_features(img)
+
+    def extract(self):
+        spatial_features = get_bin_spatial_features(self.img, size=self.spatial_size)
+        hist_features = get_color_hist_features(self.img, nbins=self.hist_bins)
+        features = np.concatenate((spatial_features,
+                                   hist_features,
+                                   self.hog_features))
+        return features
+
+    def extract_from_tile(self):
+        raise NotImplementedError
+
+
+def get_hog_features(img, orientations, pixels_per_cell, cells_per_block,
+                     visualise=False, feature_vector=True):
+
+    if visualise:
+        out = hog(img, orientations=orientations,
+                  pixels_per_cell=(pixels_per_cell, pixels_per_cell),
+                  cells_per_block=(cells_per_block, cells_per_block),
+                  transform_sqrt=True, visualise=visualise,
+                  feature_vector=feature_vector)
+        return out[0], out[1]  # features, hog_image
+    else:
+        features = []
+        for channel in range(img.shape[2]):
+            out = hog(img[:, :, channel], orientations=orientations,
+                      pixels_per_cell=(pixels_per_cell, pixels_per_cell),
+                      cells_per_block=(cells_per_block, cells_per_block),
+                      transform_sqrt=True, visualise=visualise,
+                      feature_vector=feature_vector)
+            features.append(out)
+        return np.ravel(features)
+
+
+def get_bin_spatial_features(img, size=(32, 32)):
+    """
+    Function to compute binned color features
+    """
+    return cv2.resize(img, size).ravel()
+
+
+def get_color_hist_features(img, nbins=32):
+    """
+    Function to compute color histogram features
+    """
+    # Compute the histogram of the color channels separately
+    channel1_hist = np.histogram(img[:, :, 0], bins=nbins)
+    channel2_hist = np.histogram(img[:, :, 1], bins=nbins)
+    channel3_hist = np.histogram(img[:, :, 2], bins=nbins)
+    # Concatenate the histograms into a single feature vector
+    hist_features = np.concatenate((channel1_hist[0],
+                                    channel2_hist[0],
+                                    channel3_hist[0]))
+    return hist_features
+
 
 def sliding_window_search(img,
                           x_start_stop=[None, None],
