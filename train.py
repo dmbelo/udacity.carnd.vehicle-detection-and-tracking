@@ -4,10 +4,12 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 from utils import Features
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
+from sklearn.externals import joblib
 
 
 def print_stats(cars, notcars):
@@ -72,13 +74,15 @@ def train(cars, notcars):
     print('Test Accuracy of SVC = {0:2.4f}'.format(accuracy))
 
     # Example predcitions
-
     img_example = process_image(cars[np.random.randint(0, len(cars))])
     feature_example = feat_obj.extract(img_example)
-    features_scaled = scaler.transform(feature_example)
+    features_scaled = scaler.transform(feature_example.reshape(1, -1))
     print(clf.predict(features_scaled))
     plt.imshow(cv2.cvtColor(img_example, cv2.COLOR_YCR_CB2RGB))
     plt.show()
+
+    # Save to disk
+    joblib.dump(clf, 'classifier.pkl', compress=9)
 
     return clf
 
