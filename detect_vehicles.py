@@ -29,7 +29,7 @@ def pipeline(img):
                                classifier, p_search, p_features)
 
     heatmap_thresh = heatmap.copy()
-    apply_threshold(heatmap_thresh, 5)
+    apply_threshold(heatmap_thresh, 4)
     boxes = scipy_label(heatmap_thresh)
 
     draw_car_boxes(img_draw_cars, boxes)
@@ -38,14 +38,14 @@ def pipeline(img):
 
 
 def process_frame(img):
-    out = pipeline(img, classifier, p_features, p_search)
+    out = pipeline(img)
     img_draw_search, img_draw_cars, heatmap = out
     return img_draw_cars
 
 
 def detect_vehicles():
-    # file = 'short_project_video.mp4'
-    file = 'test_images/test3.jpg'
+    file = 'short_project_video.mp4'
+    # file = 'test_images/test6.jpg'
     video_extensions = {'.mp4', '.mov'}
     extension = os.path.splitext(file)[1]
     if extension in video_extensions:
@@ -57,6 +57,7 @@ def detect_vehicles():
         img = read_image(file)
         out = pipeline(img)
         img_draw_search, img_draw_cars, heatmap = out
+        plt.figure(figsize=(10, 3))
         plt.subplot(131)
         plt.imshow(img_draw_search)
         plt.axis('off')
@@ -66,6 +67,7 @@ def detect_vehicles():
         plt.subplot(133)
         plt.imshow(img_draw_cars)
         plt.axis('off')
+        plt.tight_layout()
         plt.show()
 
 

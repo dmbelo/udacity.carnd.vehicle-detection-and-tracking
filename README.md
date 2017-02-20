@@ -42,9 +42,16 @@ That scale and overlap of the windows are largely based on trial and error. The 
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-I used a set of 6 test images from the video to assess the performance of my classifier and sliding window algorithm. To optimize the peformance of my classifier I iterated the training process of the classifier. Whereas the test set that was set aside from the training set was a reasonable measure of the accuracy of the classifier, these images are a more realistic measure of the false-positive that the classifier needs to minimize. As well, the parameters of the sliding window and heat map thresholding are tuned iteratively by analzying the performance on the following 6 test images:
+I used a set of 6 test images from the video to assess the performance of my classifier and sliding window algorithm. To optimize the performance of my classifier I iterated the training process of the classifier. Whereas the test set that was set aside from the training set was a reasonable measure of the accuracy of the classifier, these images are a more realistic measure of the false-positive that the classifier needs to minimize. As well, the parameters of the sliding window and heat map thresholding are tuned iteratively by analyzing the performance on the following 6 test images:
 
+![alt text][image4]
+![alt text][image5]
+![alt text][image6]
+![alt text][image7]
+![alt text][image8]
+![alt text][image9]
 
+As you can see there are quite a few false-positives which require thresholding the heatmap to suppress.
 
 ### Video Implementation
 
@@ -71,9 +78,9 @@ The sliding window search method that I employed has room for a lot of improveme
 [image1]: examples/car_notcar.png
 [image2]: examples/car_hog.png
 [image3]: examples/notcar_hog.png
-<!-- [image3]: ./examples/sliding_windows.jpg -->
-<!-- [image4]: ./examples/sliding_window.jpg -->
-<!-- [image5]: ./examples/bboxes_and_heat.png -->
-<!-- [image6]: ./examples/labels_map.png -->
-<!-- [image7]: ./examples/output_bboxes.png -->
-<!-- [video1]: ./project_video.mp4 -->
+[image4]: examples/vehicle_detection_img1.png
+[image5]: examples/vehicle_detection_img2.png
+[image6]: examples/vehicle_detection_img3.png
+[image7]: examples/vehicle_detection_img4.png
+[image8]: examples/vehicle_detection_img5.png
+[image9]: examples/vehicle_detection_img6.png
