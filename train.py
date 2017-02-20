@@ -46,7 +46,7 @@ def train():
     features_train, features_test, labels_train, labels_test = out
 
     # Initialize support vector machine object
-    clf = SVC(kernel="linear")
+    clf = SVC(kernel='linear', C=0.00001)
     # Check the training time for the SVC
     t = time.time()
     clf.fit(features_train, labels_train)

@@ -44,9 +44,9 @@ def process_frame(img):
 
 
 def detect_vehicles():
-    file = 'project_video.mp4'
+    # file = 'project_video.mp4'
     # file = 'short_project_video.mp4'
-    # file = 'test_images/test6.jpg'
+    file = 'test_images/test5.jpg'
     video_extensions = {'.mp4', '.mov'}
     extension = os.path.splitext(file)[1]
     if extension in video_extensions:
