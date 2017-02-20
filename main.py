@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import os.path
+from moviepy.editor import VideoFileClip
 
 from scipy.ndimage.measurements import label as scipy_label
 from skimage.feature import hog
@@ -9,7 +11,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.externals import joblib
-
 
 
 class Classifier():
@@ -27,17 +28,17 @@ class Classifier():
 
 class FeatureParameters():
     def __init__(self):
-        self.spatial_size = (16, 16)
+        self.spatial_size = (32, 32)
         self.hist_bins = 32
         self.orientations = 8
-        self.pixels_per_cell = 10
+        self.pixels_per_cell = 8
         self.cells_per_block = 2
 
 
 class SearchParameters():
     def __init__(self):
         self.window_size = 64
-        self.scale = 1.4
+        self.scale = 1.25
         self.cell_per_step = 2
         self.ystart = 380
         self.ystop = 660
@@ -49,8 +50,8 @@ def read_image(file):
 
 
 def process_image(img):
-    img = img.astype(np.float32)/255
-    return cv2.cvtColor(img, cv2.COLOR_RGB2YCR_CB)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2YCR_CB)
+    return img.astype(np.float32)
 
 
 def print_stats(cars, notcars):
@@ -139,8 +140,7 @@ def extract_window_features(img_draw, img_window, block_per_window,
         win_draw = np.int(p_search.window_size * p_search.scale)
         box = [(xbox_left, ytop_draw + p_search.ystart), (xbox_left + win_draw,
                ytop_draw + win_draw + p_search.ystart)]
-        cv2.rectangle(img_draw, box[0], box[1],
-                      (0, 0, 255), 6)
+        cv2.rectangle(img_draw, box[0], box[1], (0, 0, 255), 6)
         add_heat(heatmap, box)
 
 
@@ -265,10 +265,36 @@ def pipeline(img, classifier, p_features, p_search):
     return img_draw_search, img_draw_cars, heatmap
 
 
+def process_frame(img):
+    out = pipeline(img, classifier, p_features, p_search)
+    img_draw_search, img_draw_cars, heatmap = out
+    return img_draw_cars
+
+
+def main(file, classifier, p_features, p_search):
+    video_extensions = {'.mp4', '.mov'}
+    extension = os.path.splitext(file)[1]
+    if extension in video_extensions:
+        video_output = "project_video_output.mp4"
+        clip = VideoFileClip("short_project_video.mp4")
+        clip = clip.fl_image(process_frame)
+        clip.write_videofile(video_output, audio=False)
+    else:
+        img = read_image(file)
+        out = pipeline(img, classifier, p_features, p_search)
+        img_draw_search, img_draw_cars, heatmap = out
+        plt.subplot(121)
+        plt.imshow(img_draw_search)
+        plt.subplot(122)
+        plt.imshow(heatmap, cmap='hot')
+        plt.show()
+
+
 if __name__ == "__main__":
+    # Parameters
     p_features = FeatureParameters()
     p_search = SearchParameters()
-    #
+
     # import glob
     # notcars = glob.glob('data/non-vehicles/*/*.png')
     # cars = glob.glob('data/vehicles/*/*.png')
@@ -276,28 +302,8 @@ if __name__ == "__main__":
     # print_stats(cars, notcars)
     # classifier = train(cars, notcars, p_features)
     # joblib.dump(classifier, 'classifier.pkl')
-    #
-    # # Time to predict
-    # img_test = read_image('data/vehicles/GTI_Far/image0018.png')
-    # img_processed = process_image(img_test)
-    # features_test = extract_features(img_processed, p_features)
-    # t = time.time()
-    # prediction = classifier.predict(features_test.reshape(1, -1))
-    # print('{0:2.2f} seconds to make prediction...'.format(time.time() - t))
-    # print(prediction)
 
     classifier = joblib.load('classifier.pkl')
-
-    img = read_image('test_images/test6.jpg')
-    t = time.time()
-    img_draw_search, img_draw_cars, heatmap = pipeline(img, classifier,
-                                                       p_features, p_search)
-
-    print('{0:2.2f} seconds to run pipeline...'.format(time.time() - t))
-
-    plt.subplot(121)
-    plt.imshow(img_draw_cars)
-    plt.subplot(122)
-    plt.imshow(heatmap, cmap='hot')
-
-    plt.show()
+    file = 'short_project_video.mp4'
+    # file = 'test_images/test4.jpg'
+    main(file, classifier, p_features, p_search)
