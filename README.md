@@ -8,12 +8,40 @@ The HOG features were extracted from my training images using the `get_hog_featu
 
 I've chosen to extract the HOG features from all three channels in an image and concatenate them into a single feature vector as this showed superior classification performance using an SVM classifier as discussed below.
 
-The HOG space for a few sample images from the training set are displayed here:
+Here are 5 examples from each class of the trainin set:
 
-*INSERT IMAGES*
+![alt text][image1]
+
+The HOG space for a a car example is displayed below. Note the the gradients vaguely look like the car. Also not that 3 different hog channel are displayed in the hog diagram with red, green and blue gradients for each channel.
+
+![alt text][image2]
+
+In contrast, the non-car HOG looks like this.
+
+![alt text][image3]
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
 The parameters for the HOG algorithm live in a larger `FeatureParameters` class defined in `utils.py`. I arrived at the values there by trial and error. The HOG operation is the most time consuming of the vehicle detection pipeline so it's advantageous to keep the number of features as small as possible for this reason. Also the pixel per cell size of (8,8) was chosen to be roughly the size of important features making up a car, i.e. the size of tail lights, windows, etc. In the interest of fewer features I've also reduced the orientation parameter down to 8 from the suggested value of 9 form the class notes with not noticeable degradation in classification accuracy.
 
+The choice of color space was a very influential one. I experimented with many different color spaces and channels, but in the end, using all channels of the YCrCb color space seemed to yield the best performance.
+
+
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+
+I trained a linear support vector machine (SVM) using `sklearn.svm.SVC`. The training process was carried out in the `train.py` file. Here I first instantiate a `FeatureParameters` object which contains all of my relevant parameters controlling the feature extraction process. I then read in and aggregate all of my training images for car examples and non-car examples. Once aggregated I extracted the features relative them using the `extract_features` function and created a label vector representative of the car/notcar classes. The data was scaled using `sklearn.preprocessing.StandardScaler`, randomized and divided into training and testing sets. Finally the classifier was fit to the training data and the accuracy was observed to be > 0.99.
+
+Finally, the SVM and the scaler object are packed into a `Classifier` object and pickled into a file to be saved to the hard-disk and reloaded for vehicle detection later.
+
+###Sliding Window Search
+
+[//]: # (Image References)
+[image1]: examples/car_notcar.png
+[image2]: examples/car_hog.png
+[image3]: examples/notcar_hog.png
+<!-- [image3]: ./examples/sliding_windows.jpg -->
+<!-- [image4]: ./examples/sliding_window.jpg -->
+<!-- [image5]: ./examples/bboxes_and_heat.png -->
+<!-- [image6]: ./examples/labels_map.png -->
+<!-- [image7]: ./examples/output_bboxes.png -->
+<!-- [video1]: ./project_video.mp4 -->
