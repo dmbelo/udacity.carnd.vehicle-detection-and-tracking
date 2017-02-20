@@ -35,6 +35,22 @@ class SearchParameters():
         self.ystop = 660
 
 
+class HeatMaps():
+    def __init__(self, size, n_maps):
+        heatmaps = []
+        for n in range(n_maps):
+            heatmaps.append(np.zeros(size))
+
+        self.heatmaps = heatmaps
+
+    def update(self, heatmap):
+        self.heatmaps[:-1] = self.heatmaps[1:]
+        self.heatmaps[-1] = heatmap
+
+    def get_sum(self):
+        return np.sum(self.heatmaps, axis=0)
+
+
 def read_image(file):
     img = cv2.imread(file)
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

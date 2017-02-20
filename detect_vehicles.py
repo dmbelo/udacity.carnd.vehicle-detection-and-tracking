@@ -3,10 +3,11 @@ import cv2
 import matplotlib.pyplot as plt
 import os.path
 
+
 from scipy.ndimage.measurements import label as scipy_label
 from sklearn.externals import joblib
 from moviepy.editor import VideoFileClip
-from utils import Classifier, FeatureParameters, SearchParameters
+from utils import Classifier, FeatureParameters, SearchParameters, HeatMaps
 from utils import get_hog_features, slide_and_search, apply_threshold
 from utils import draw_car_boxes, process_image, read_image
 
@@ -14,6 +15,7 @@ from utils import draw_car_boxes, process_image, read_image
 p_features = FeatureParameters()
 p_search = SearchParameters()
 classifier = joblib.load('classifier.pkl')
+heatmaps = HeatMaps(size=(720, 1280), n_maps=10)
 
 
 def pipeline(img):
@@ -28,13 +30,15 @@ def pipeline(img):
     heatmap = slide_and_search(img_search, img_draw_search, hog_features,
                                classifier, p_search, p_features)
 
-    heatmap_thresh = heatmap.copy()
-    apply_threshold(heatmap_thresh, 4)
+    heatmaps.update(heatmap)
+    heatmap_sum = heatmaps.get_sum()
+    heatmap_thresh = heatmap_sum.copy()
+    apply_threshold(heatmap_thresh, 25)
     boxes = scipy_label(heatmap_thresh)
 
     draw_car_boxes(img_draw_cars, boxes)
 
-    return img_draw_search, img_draw_cars, heatmap
+    return img_draw_search, img_draw_cars, heatmap_sum
 
 
 def process_frame(img):
@@ -45,8 +49,8 @@ def process_frame(img):
 
 def detect_vehicles():
     # file = 'project_video.mp4'
-    # file = 'short_project_video.mp4'
-    file = 'test_images/test5.jpg'
+    file = 'short_project_video.mp4'
+    # file = 'test_images/test5.jpg'
     video_extensions = {'.mp4', '.mov'}
     extension = os.path.splitext(file)[1]
     if extension in video_extensions:
