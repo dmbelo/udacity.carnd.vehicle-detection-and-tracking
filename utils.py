@@ -21,7 +21,7 @@ class FeatureParameters():
     def __init__(self):
         self.spatial_size = (32, 32)
         self.hist_bins = 32
-        self.orientations = 8
+        self.orientations = 9
         self.pixels_per_cell = 8
         self.cells_per_block = 2
 
@@ -29,7 +29,7 @@ class FeatureParameters():
 class SearchParameters():
     def __init__(self):
         self.window_size = 64
-        self.scale = 1.25
+        self.scale = 1.6
         self.cell_per_step = 2
         self.ystart = 380
         self.ystop = 660

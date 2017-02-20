@@ -8,7 +8,7 @@ The HOG features were extracted from my training images using the `get_hog_featu
 
 I've chosen to extract the HOG features from all three channels in an image and concatenate them into a single feature vector as this showed superior classification performance using an SVM classifier as discussed below.
 
-Here are 5 examples from each class of the trainin set:
+Here are 5 examples from each class of the training set:
 
 ![alt text][image1]
 
@@ -28,7 +28,7 @@ The choice of color space was a very influential one. I experimented with many d
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear support vector machine (SVM) using `sklearn.svm.SVC`. The training process was carried out in the `train.py` file. Here I first instantiate a `FeatureParameters` object which contains all of my relevant parameters controlling the feature extraction process. I then read in and aggregate all of my training images for car examples and non-car examples. Once aggregated I extracted the features relative them using the `extract_features` function and created a label vector representative of the car/notcar classes. The data was scaled using `sklearn.preprocessing.StandardScaler`, randomized and divided into training and testing sets. Finally the classifier was fit to the training data and the accuracy was observed to be > 0.99.
+I trained a linear support vector machine (SVM) using `sklearn.svm.SVC`. The training process was carried out in the `train.py` file. Here I first instantiate a `FeatureParameters` object which contains all of my relevant parameters controlling the feature extraction process. I then read in and aggregate all of my training images for car examples and non-car examples. The data set consisted of 8792 car samples and 8968 non-car samples. Once aggregated I extracted the features relative them using the `extract_features` function and created a label vector representative of the car/notcar classes. The data was scaled using `sklearn.preprocessing.StandardScaler`, randomized and divided into training and testing sets. Finally the classifier was fit to the training data and the accuracy was observed to be > 0.99.
 
 Finally, the SVM and the scaler object are packed into a `Classifier` object and pickled into a file to be saved to the hard-disk and reloaded for vehicle detection later.
 
@@ -42,6 +42,29 @@ That scale and overlap of the windows are largely based on trial and error. The 
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
+I used a set of 6 test images from the video to assess the performance of my classifier and sliding window algorithm. To optimize the peformance of my classifier I iterated the training process of the classifier. Whereas the test set that was set aside from the training set was a reasonable measure of the accuracy of the classifier, these images are a more realistic measure of the false-positive that the classifier needs to minimize. As well, the parameters of the sliding window and heat map thresholding are tuned iteratively by analzying the performance on the following 6 test images:
+
+
+
+### Video Implementation
+
+####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+Here's a [link to my video result](./project_video.mp4)
+
+####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
+
+###Discussion
+
+####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+
+The approach I took in this project was that of a traditional machine vision approach which can largely be split into two steps: 1) fitting a classifier and 2) using a sliding window search to detect vehicle using the classifier.
+
+As far as fitting the classifier, I would like to look further into the dataset and see if there are any opportunities to improve the false-positive detection of the classifier. Perhaps there is a bias of the classifier that can be exposed and remedied by augmenting the data set with better examples of cars and note cars.
+
+The sliding window search method that I employed has room for a lot of improvement. At the moment what I've done is very basic and I struggle to deal with false-positives. I can see various options to improve its performance significantly including:
+* Averaging the most recent heatmaps in order to better reject false-positives across time
+* Implement a sliding window approach that varies the size of the search windows depending on how far down the road you are searching. The idea is that the vehicle that are further down the road should be smaller in size due to the perspective and thus require smaller search windows.
+* Implement a sliding window approach that limits the search domain in the x-dimension as you approach the horizon
 
 
 [//]: # (Image References)
