@@ -60,6 +60,12 @@ Here's a [link to my video result](./project_video.mp4)
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
+I implemented a heatmap approach to filtering the sliding window search vehicle detections. This was done be incrementing by 1 any pixel that was in a window in which a vehicle was predicted by the classifier. This results in the heatmaps as observed in the 6 test images above. By thresholding this heatmap, we can effectively filter out a large portion of the false positives by requiring that a vehicle detection has more than a certain amount of heat.
+
+Once thresholded, bounding rectangular boxes which circumscribe these pockets of heat can be calculated using the `scipy.ndimage.measurements.label` function.
+
+The heatmaps and thresholding are implemented in the `utils.py` file and used in the `detect_vehicles.py` file. Heatmaps are calculated by the `slide_and_search` function, heat is added and thresholding is done in the `add_heat` and `apply_threshold` functions, respectively. Labeling is handled in the `detect_vehicles.py` file entirely, specifically in the `pipeline` function. 
+
 ###Discussion
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
@@ -72,7 +78,6 @@ The sliding window search method that I employed has room for a lot of improveme
 * Averaging the most recent heatmaps in order to better reject false-positives across time
 * Implement a sliding window approach that varies the size of the search windows depending on how far down the road you are searching. The idea is that the vehicle that are further down the road should be smaller in size due to the perspective and thus require smaller search windows.
 * Implement a sliding window approach that limits the search domain in the x-dimension as you approach the horizon
-
 
 [//]: # (Image References)
 [image1]: examples/car_notcar.png

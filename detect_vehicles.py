@@ -44,13 +44,14 @@ def process_frame(img):
 
 
 def detect_vehicles():
-    file = 'short_project_video.mp4'
+    file = 'project_video.mp4'
+    # file = 'short_project_video.mp4'
     # file = 'test_images/test6.jpg'
     video_extensions = {'.mp4', '.mov'}
     extension = os.path.splitext(file)[1]
     if extension in video_extensions:
         video_output = "project_video_output.mp4"
-        clip = VideoFileClip("short_project_video.mp4")
+        clip = VideoFileClip(file)
         clip = clip.fl_image(process_frame)
         clip.write_videofile(video_output, audio=False)
     else:
