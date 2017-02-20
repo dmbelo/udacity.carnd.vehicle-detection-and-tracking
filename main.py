@@ -3,11 +3,13 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 
+from scipy.ndimage.measurements import label as scipy_label
 from skimage.feature import hog
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.externals import joblib
+
 
 
 class Classifier():
@@ -27,8 +29,8 @@ class FeatureParameters():
     def __init__(self):
         self.spatial_size = (16, 16)
         self.hist_bins = 32
-        self.orientations = 9
-        self.pixels_per_cell = 8
+        self.orientations = 8
+        self.pixels_per_cell = 10
         self.cells_per_block = 2
 
 
@@ -36,7 +38,7 @@ class SearchParameters():
     def __init__(self):
         self.window_size = 64
         self.scale = 1.4
-        self.cell_per_step = 1
+        self.cell_per_step = 2
         self.ystart = 380
         self.ystop = 660
 
@@ -46,11 +48,8 @@ def read_image(file):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
-def process_image(img, format='png'):
-    if format == 'png':
-        img = img.astype(np.float32)/255
-    elif format == 'jpeg':
-        img = img.astype(np.float32)/255
+def process_image(img):
+    img = img.astype(np.float32)/255
     return cv2.cvtColor(img, cv2.COLOR_RGB2YCR_CB)
 
 
@@ -155,13 +154,13 @@ def train(cars, notcars, p):
     features_car = []
     for car in cars:
         img = read_image(car)
-        img_processed = process_image(img, format='png')  # png
+        img_processed = process_image(img)
         features_car.append(extract_features(img_processed, p))
 
     features_notcar = []
     for notcar in notcars:
         img = read_image(notcar)
-        img_processed = process_image(img, format='png')  # png
+        img_processed = process_image(img)  # png
         features_notcar.append(extract_features(img_processed, p))
 
     features = np.vstack((features_car, features_notcar))
@@ -218,57 +217,58 @@ def slide_and_search(img_search, img_draw, hog_features,
                                     xleft, ytop, heatmap, p_search, p_features,
                                     classifier)
 
-    return img_draw, heatmap
+    return heatmap
+
+
+def apply_threshold(heatmap, threshold):
+    heatmap[heatmap <= threshold] = 0
+    return heatmap
+
+
+def draw_car_boxes(img, boxes):
+    # Iterate through all detected cars
+    bboxes = []
+    for car_number in range(1, boxes[1]+1):
+        # Find pixels with each car_number label value
+        nonzero = (boxes[0] == car_number).nonzero()
+        # Identify x and y values of those pixels
+        nonzeroy = np.array(nonzero[0])
+        nonzerox = np.array(nonzero[1])
+        # Define a bounding box based on min/max x and y
+        bbox = ((np.min(nonzerox), np.min(nonzeroy)),
+                (np.max(nonzerox), np.max(nonzeroy)))
+        bboxes.append(bbox)
+        # Draw the box on the image
+        cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
+    # Return the image
+    return bboxes
 
 
 def pipeline(img, classifier, p_features, p_search):
-    """
-    img - RGB - 0-255 uint8
-    """
-    img_draw = img.copy()
-    img_processed = process_image(img, format='jpeg')
+    img_draw_search = img.copy()
+    img_draw_cars = img.copy()
+    img_processed = process_image(img)
     img_search = img_processed[p_search.ystart:p_search.ystop, :, :]
     shape = img_search.shape
     img_search = cv2.resize(img_search, (np.int(shape[1] / p_search.scale),
                                          np.int(shape[0] / p_search.scale)))
-    # image = image.astype(np.float32) / 255
-    # image_to_search = image[search_p.ystart:search_p.ystop,:,:]
-    # image_to_search = cv2.cvtColor(image_to_search, cv2.COLOR_RGB2YCrCb)
-
-    # hog_all = []
-
     hog_features = get_hog_features(img_search, p_features)[0]
-    # return np.concatenate((b_features, c_features, np.ravel(h_features)))
-    # if search_p.scale != 1:
-    # imshape = image_to_search.shape
-    # image_to_search = cv2.resize(image_to_search, (np.int(imshape[1] /
-    # search_p.scale), np.int(imshape[0] / search_p.scale)))
-    # for channel in range(0, 3):
-    # hog_all.append(get_hog_features(image_to_search[:,:,channel],
-    # parameters.orient, parameters.pix_per_cell, parameters.cell_per_block,
-    # feature_vec=False))
+    heatmap = slide_and_search(img_search, img_draw_search, hog_features,
+                               classifier, p_search, p_features)
 
-    img_draw, heatmap = slide_and_search(img_search, img_draw, hog_features,
-                                         classifier, p_search, p_features)
+    heatmap_thresh = heatmap.copy()
+    apply_threshold(heatmap_thresh, 2)
+    boxes = scipy_label(heatmap_thresh)
 
-    return img_draw, heatmap
+    draw_car_boxes(img_draw_cars, boxes)
 
-
-# def save_object(obj, filename):
-#     with open(filename, 'wb') as f:
-#         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-#
-#
-# def load_object(filename):
-#     with open(filename, 'rb') as f:
-#         out = pickle.load(f)
-#     return out
+    return img_draw_search, img_draw_cars, heatmap
 
 
 if __name__ == "__main__":
     p_features = FeatureParameters()
     p_search = SearchParameters()
-
+    #
     # import glob
     # notcars = glob.glob('data/non-vehicles/*/*.png')
     # cars = glob.glob('data/vehicles/*/*.png')
@@ -276,11 +276,10 @@ if __name__ == "__main__":
     # print_stats(cars, notcars)
     # classifier = train(cars, notcars, p_features)
     # joblib.dump(classifier, 'classifier.pkl')
-    # # save_object(classifier, 'classifier.pkl')
-
-    # Time to predict
+    #
+    # # Time to predict
     # img_test = read_image('data/vehicles/GTI_Far/image0018.png')
-    # img_processed = process_image(img_test, format='png')
+    # img_processed = process_image(img_test)
     # features_test = extract_features(img_processed, p_features)
     # t = time.time()
     # prediction = classifier.predict(features_test.reshape(1, -1))
@@ -288,16 +287,17 @@ if __name__ == "__main__":
     # print(prediction)
 
     classifier = joblib.load('classifier.pkl')
-    # classifier = load_object('classifier.pkl')
 
-    img = read_image('test_images/test1.jpg')
+    img = read_image('test_images/test6.jpg')
     t = time.time()
-    img_draw, heatmap = pipeline(img, classifier, p_features, p_search)
+    img_draw_search, img_draw_cars, heatmap = pipeline(img, classifier,
+                                                       p_features, p_search)
+
     print('{0:2.2f} seconds to run pipeline...'.format(time.time() - t))
 
-    plt.subplot(211)
-    plt.imshow(img_draw)
-    plt.subplot(212)
+    plt.subplot(121)
+    plt.imshow(img_draw_cars)
+    plt.subplot(122)
     plt.imshow(heatmap, cmap='hot')
 
     plt.show()
