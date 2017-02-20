@@ -30,6 +30,8 @@ The choice of color space was a very influential one. I experimented with many d
 
 I trained a linear support vector machine (SVM) using `sklearn.svm.SVC`. The training process was carried out in the `train.py` file. Here I first instantiate a `FeatureParameters` object which contains all of my relevant parameters controlling the feature extraction process. I then read in and aggregate all of my training images for car examples and non-car examples. The data set consisted of 8792 car samples and 8968 non-car samples (nicely balanced). Once aggregated, I extracted the features relative to them using the `extract_features` function and created a label vector representative of the car/notcar classes. The data was scaled using `sklearn.preprocessing.StandardScaler`, randomized and divided into training and testing sets. Finally the classifier was fit to the training data and the accuracy was observed to be upwards of 99 %.
 
+I tested changing the C parameter of the `sklearn.svm.SVC`, the penalty parameter of the error term. By choosing a lower value, in this case `C=0.00001` I effectively tell the optimizer to look for a larger-margin separating hyperplane than otherwise. This should result in a model that should generalize to unseen example even if it misclassifies more examples in the training/testing set.
+
 Finally, the SVM and the scaler object are packed into a `Classifier` object and pickled into a file to be saved to the hard-disk and reloaded for vehicle detection later.
 
 ###Sliding Window Search
@@ -56,7 +58,7 @@ As you can see there are quite a few false-positives which require thresholding 
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/kPzklvMozho/0.jpg)](https://www.youtube.com/watch?v=kPzklvMozho)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/kPzklvMozho/0.jpg)](https://www.youtube.com/watch?v=PNkVeYQboyk)
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
@@ -65,7 +67,7 @@ I implemented a heatmap approach to filtering the sliding window search vehicle 
 
 Once thresholded, bounding rectangular boxes which circumscribe these pockets of heat can be calculated using the `scipy.ndimage.measurements.label` function.
 
-The heatmaps and thresholding are implemented in the `utils.py` file and used in the `detect_vehicles.py` file. Heatmaps are calculated by the `slide_and_search` function, heat is added and thresholding is done in the `add_heat` and `apply_threshold` functions, respectively. Labeling is handled in the `detect_vehicles.py` file entirely, specifically in the `pipeline` function.
+The heatmaps and thresholding are implemented in the `utils.py` file and used in the `detect_vehicles.py` file. Heatmaps are calculated by the `slide_and_search` function, heat is added appropriately when a vehicle is detected and then 10 frames of heatmaps are summed together.  Once summed, the resulting 10-frame heatmap is thresholded using the `apply_threshold` function. This is done in order to better reject false-positive detections across time. Labeling is handled in the `detect_vehicles.py` file entirely, specifically in the `pipeline` function.
 
 ###Discussion
 
@@ -76,7 +78,6 @@ The approach I took in this project was that of a traditional machine vision app
 As far as fitting the classifier, I would like to look further into the dataset and see if there are any opportunities to improve the false-positive detection of the classifier. Perhaps there is a bias of the classifier that can be exposed and remedied by augmenting the data set with better examples of cars and note cars.
 
 The sliding window search method that I employed has room for a lot of improvement. At the moment what I've done is very basic and I struggle to deal with false-positives. I can see various options to improve its performance significantly including:
-* Filter or averaging the most recent heatmaps in order to better reject false-positives across time
 * Implement a sliding window approach that varies the size of the search windows depending on how far down the road you are searching. The idea is that the vehicle that are further down the road should be smaller in size due to the perspective and thus require smaller search windows.
 * Implement a sliding window approach that limits the search domain in the x-dimension as you approach the horizon
 
